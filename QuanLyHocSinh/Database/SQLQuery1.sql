@@ -280,11 +280,22 @@ FROM
 GROUP BY
     hs.HoTen, lop.TenLop, hk.TenHocKi, mh.TenMonHoc;
 
+create table CHITIETDSLOP
+(
+	MaChiTietDSLop varchar(10) primary key,
+	MaLop varchar(10),
+	MaHocKi varchar(10),
+	MaHocSinh varchar(10),
+	DTBHocKi decimal(4,2),
+	foreign key (MaLop) references LOP(MaLop),
+	foreign key (MaHocKi) references HOCKI(MaHocKi),
+	foreign key (MaHocSinh) references HOCSINH(MaHocSinh)
+)
 SELECT 
-    hs.HoTen,
-    lop.TenLop,
-    hk.TenHocKi,
-    ROUND(SUM(ct.Diem * mh.HeSo * lh.HeSo) / SUM(mh.HeSo * lh.HeSo), 2) as DTBHocKi
+    lop.MaLop,
+    hk.MaHocKi,
+    hs.MaHocSinh,
+    ROUND(SUM(ct.Diem * mh.HeSo * lh.HeSo) / NULLIF(SUM(mh.HeSo * lh.HeSo), 0), 2) as DTBHocKi
 FROM 
     HOCSINH hs 
     JOIN LOP lop ON hs.MaLop = lop.MaLop
@@ -294,9 +305,10 @@ FROM
     LEFT JOIN CT_DIEMLOAIHINHKT ct ON bdm.MaBangDiem = ct.MaBangDiem AND hs.MaHocSinh = ct.MaHocSinh
     LEFT JOIN LOAIHINHKIEMTRA lh ON ct.MaLoaiHinhKT = lh.MaLoaiHinhKT
 GROUP BY 
-    hs.HoTen,
-    lop.TenLop,
-    hk.TenHocKi;
+    lop.MaLop,
+    hk.MaHocKi,
+    hs.MaHocSinh;
+
 create table BAOCAOTONGKETMON
 (
 	MaBaoCaoMon varchar(10) primary key,
@@ -304,6 +316,15 @@ create table BAOCAOTONGKETMON
 	MaNamHoc varchar(4) foreign key references NAMHOC(MaNamHoc),
 	MaMonHoc varchar(10) foreign key references MONHOC(MaMonHoc)
 )
+INSERT INTO BAOCAOTONGKETMON (MaBaoCaoMon, MaHocKi, MaNamHoc, MaMonHoc)
+VALUES 
+    ('BCM001', 'HK1', '2019', 'MH01'),
+    ('BCM002', 'HK1', '2019', 'MH02'),
+    ('BCM003', 'HK1', '2019', 'MH03'),
+    ('BCM004', 'HK2', '2019', 'MH01'),
+    ('BCM005', 'HK2', '2019', 'MH02'),
+    ('BCM006', 'HK2', '2019', 'MH03');
+
 create table CT_BAOCAOTONGKETMON
 (
 	MaBaoCaoMon varchar(10),
@@ -339,18 +360,6 @@ BEGIN
 END;
 GO
 
-create table CHITIETDSLOP
-(
-	MaChiTietDSLop varchar(10),
-	MaLop varchar(10),
-	MaHocKi varchar(10),
-	MaHocSinh varchar(10),
-	DTBHocKi decimal(2,2),
-	primary key (MaChiTietDSLop, MaLop, MaHocKi, MaHocSinh),
-	foreign key (MaLop) references LOP(MaLop),
-	foreign key (MaHocKi) references HOCKI(MaHocKi),
-	foreign key (MaHocSinh) references HOCSINH(MaHocSinh)
-)
 
 create table BAOCAOTONGKETHK
 (
