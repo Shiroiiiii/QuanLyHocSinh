@@ -9,18 +9,12 @@ namespace WindowsFormsApp3.BLL
 {
     public class BLL_Lop
     {
-        private static readonly Lazy<BLL_Lop> lazyInstance = new Lazy<BLL_Lop>(() => new BLL_Lop());
-        public static BLL_Lop Instance
-        {
-            get { return lazyInstance.Value; }
-        }
-
-        /*private static BLL_Lop instance;//ctr + r + e
+        private static BLL_Lop instance;//ctr + r + e
         public static BLL_Lop Instance
         {
             get { if (instance == null) instance = new BLL_Lop(); return instance; }
             private set => instance = value;
-        }*/
+        }
         private BLL_Lop() { }
         public DataTable DanhSach()
         {
