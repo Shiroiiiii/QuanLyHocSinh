@@ -1,0 +1,14 @@
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\QuanLyHocSinh.csproj.AssemblyReference.cache
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\WinFormsApp1.fBANGDIEM.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\QuanLyHocSinh.fDangNhap.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\QuanLyHocSinh.GUI.fHocSinh.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\WindowsFormsApp3.GUI.fQuanLyCTDSLop.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\WindowsFormsApp3.GUI.fQLHocKi.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\WindowsFormsApp3.GUI.fQLKhoiLop.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\WindowsFormsApp3.GUI.fQuanLyLop.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\WindowsFormsApp3.GUI.fQLMonHoc.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\WindowsFormsApp3.GUI.fQLNamHoc.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\QuanLyHocSinh.GUI.fQuanLyTaiKhoan.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\QuanLyHocSinh.Properties.Resources.resources
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\QuanLyHocSinh.csproj.GenerateResource.cache
+C:\Users\ADMIN\Downloads\New folder\QuanLyHocSinh-main\QuanLyHocSinh\QuanLyHocSinh\obj\Debug\QuanLyHocSinh.csproj.CoreCompileInputs.cache

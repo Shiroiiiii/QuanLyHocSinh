@@ -19,7 +19,7 @@ namespace QuanLyHocSinh.GUI
 
         private void đăngXuấtToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            new fThongTinChiTiet().ShowDialog();
         }
 
         private void quảnLýToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -43,6 +43,27 @@ namespace QuanLyHocSinh.GUI
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+     
+
+        private void quảnLýTàiKhoảnToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            fQuanLyTaiKhoan f = new fQuanLyTaiKhoan();
+            this.Hide();
+            f.ShowDialog();
+            this.Show();
+        }
+
+        private void đổiMậtKhẩuToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            new fDoiMatKhau().ShowDialog();
+
+        }
+
+        private void đăngXuấtToolStripMenuItem1_Click(object sender, EventArgs e)
         {
 
         }

@@ -10,14 +10,14 @@ using System.Windows.Forms;
 
 namespace QuanLyHocSinh.GUI
 {
-    public partial class fQuanLyTaiKhoan : Form
+    public partial class fDoiMatKhau : Form
     {
-        public fQuanLyTaiKhoan()
+        public fDoiMatKhau()
         {
             InitializeComponent();
         }
 
-        private void label1_Click(object sender, EventArgs e)
+        private void fDoiMatKhau_Load(object sender, EventArgs e)
         {
 
         }
