@@ -4,7 +4,7 @@ create procedure themhocsinh
 	@MaHocSinh varchar(10),
 	@MaLop varchar(10),
 	@HoTen varchar(50),
-    @GioiTinh bit,
+    	@GioiTinh bit,
 	@NgaySinh date,
 	@DiaChi varchar(255),
 	@Email varchar(100)
@@ -12,6 +12,58 @@ AS
 BEGIN 
 	INSERT INTO HOCSINH(MaHocSinh,MaLop,HoTen,GioiTinh,NgaySinh,DiaChi,Email)
 	VALUES (@MaHocSinh,@MaLop,@HoTen,@GioiTinh,@NgaySinh,@DiaChi,@Email)
+END
+GO
+CREATE PROCEDURE themNamHoc
+    @MaNamHoc VARCHAR(4),
+    @TenNamHoc VARCHAR(50)
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM NAMHOC WHERE MaNamHoc = @MaNamHoc)
+    BEGIN
+        PRINT 'Mã năm học đã tồn tại.';
+        RETURN;
+    END
+
+    INSERT INTO NAMHOC (MaNamHoc, TenNamHoc)
+    VALUES (@MaNamHoc, @TenNamHoc);
+
+    PRINT 'Thêm dữ liệu vào bảng NAMHOC thành công.';
+END
+GO
+CREATE PROCEDURE xoaNamHoc
+    @MaNamHoc VARCHAR(4)
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM NAMHOC WHERE MaNamHoc = @MaNamHoc)
+    BEGIN
+        PRINT 'Mã năm học không tồn tại.';
+        RETURN;
+    END
+
+    DELETE FROM NAMHOC WHERE MaNamHoc = @MaNamHoc;
+
+    PRINT 'Xóa dữ liệu từ bảng NAMHOC thành công.';
+
+END
+GO
+CREATE PROCEDURE capnhatNamHoc
+    @MaNamHoc VARCHAR(4),
+    @TenNamHoc VARCHAR(50)
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM NAMHOC WHERE MaNamHoc = @MaNamHoc)
+    BEGIN
+        PRINT 'Mã năm học không tồn tại.';
+        RETURN;
+    END
+
+    UPDATE NAMHOC
+    SET TenNamHoc = @TenNamHoc
+    WHERE MaNamHoc = @MaNamHoc;
+
+    PRINT 'Cập nhật dữ liệu trong bảng NAMHOC thành công.';
+
 END
 GO
 CREATE PROCEDURE themlop
@@ -113,8 +165,60 @@ BEGIN
         PRINT 'Lỗi xảy ra khi cập nhật thông tin học sinh.';
     END
 END
-GO
+	GO
+CREATE PROCEDURE capnhatlop
+    @MaLop VARCHAR(10),
+    @TenLop VARCHAR(50),
+    @SiSo INT,
+    @MaKhoiLop VARCHAR(10),
+    @MaNamHoc VARCHAR(4)
+AS
+BEGIN
+    BEGIN TRANSACTION;
 
+    -- Cập nhật thông tin lớp trong bảng LOP
+    UPDATE LOP
+    SET 
+        TenLop = @TenLop,
+        SiSo = @SiSo,
+        MaKhoiLop = @MaKhoiLop,
+        MaNamHoc = @MaNamHoc
+    WHERE 
+        MaLop = @MaLop;
+
+    IF @@ERROR = 0
+    BEGIN
+        COMMIT TRANSACTION;
+        PRINT 'Cập nhật thông tin lớp thành công.';
+    END
+    ELSE
+    BEGIN
+        ROLLBACK TRANSACTION;
+        PRINT 'Lỗi xảy ra khi cập nhật thông tin lớp.';
+    END
+END
+GO
+CREATE PROCEDURE xoalop
+    @MaLop VARCHAR(10)
+AS
+BEGIN
+    BEGIN TRANSACTION;
+
+    -- Xóa lớp từ bảng LOP
+    DELETE FROM LOP WHERE MaLop = @MaLop;
+
+    IF @@ERROR = 0
+    BEGIN
+        COMMIT TRANSACTION;
+        PRINT 'Xóa lớp thành công.';
+    END
+    ELSE
+    BEGIN
+        ROLLBACK TRANSACTION;
+        PRINT 'Lỗi xảy ra khi xóa lớp.';
+    END
+END
+GO
 CREATE PROCEDURE themBangDiemMon
     @MaBangDiem VARCHAR(10),
     @MaLop VARCHAR(10),
