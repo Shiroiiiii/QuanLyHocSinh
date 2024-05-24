@@ -295,7 +295,7 @@ BEGIN
         MaHocKi = @MaHocKi,
         MaMonHoc = @MaMonHoc
     WHERE MaBangDiem = @MaBangDiem;
-
+go
 CREATE PROCEDURE themCTDiemLoaiHinhKT
     @MaBangDiem VARCHAR(10),
     @MaHocSinh VARCHAR(10),
@@ -328,24 +328,64 @@ BEGIN
     VALUES (@MaBangDiem, @MaHocSinh, @MaLoaiHinhKT, @Lan, @Diem);
 
     PRINT 'Thêm dữ liệu vào bảng CT_DIEMLOAIHINHKT thành công.';
+
+    DECLARE @TongDiem DECIMAL(4,2);
+    DECLARE @TongHeSo INT;
+
+    -- Tính tổng điểm và tổng hệ số từ bảng CT_DIEMLOAIHINHKT
+    SELECT @TongDiem = SUM(Diem * HeSo), @TongHeSo = SUM(HeSo)
+    FROM CT_DIEMLOAIHINHKT ctk
+    JOIN LOAIHINHKIEMTRA lhkt ON ctk.MaLoaiHinhKT = lhkt.MaLoaiHinhKT
+    WHERE ctk.MaBangDiem = @MaBangDiem AND ctk.MaHocSinh = @MaHocSinh;
+
+    -- Kiểm tra nếu không có dữ liệu trong bảng CT_DIEMLOAIHINHKT
+    IF @TongDiem IS NULL OR @TongHeSo IS NULL OR @TongHeSo = 0
+    BEGIN
+        PRINT 'Không có dữ liệu điểm loại hình kiểm tra cho bảng điểm này hoặc tổng hệ số bằng 0.';
+        RETURN;
+    END
+
+    -- Tính điểm trung bình
+    DECLARE @DTBMon DECIMAL(4,2);
+    SET @DTBMon = @TongDiem / @TongHeSo;
+
+    -- Cập nhật dữ liệu trong bảng CT_BANGDIEMMON
+    EXEC capnhatCTBangDiemMon @MaBangDiem, @MaHocSinh, @DTBMon;
+
+    PRINT 'Cập nhật dữ liệu trong bảng CT_BANGDIEMMON thành công.';
 END
 GO
-
-CREATE PROCEDURE xoaCTDiemLoaiHinhKT
+CREATE PROCEDURE tinhLaiDTBMon
     @MaBangDiem VARCHAR(10),
-    @MaHocSinh VARCHAR(10),
-    @MaLoaiHinhKT VARCHAR(10),
-    @Lan INT
+    @MaHocSinh VARCHAR(10)
 AS
 BEGIN
-    -- Xóa dữ liệu từ bảng CT_DIEMLOAIHINHKT dựa trên khóa chính
-    DELETE FROM CT_DIEMLOAIHINHKT 
-    WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh AND MaLoaiHinhKT = @MaLoaiHinhKT AND Lan = @Lan;
+    DECLARE @TongDiem DECIMAL(4,2);
+    DECLARE @TongHeSo INT;
 
-    PRINT 'Xóa dữ liệu từ bảng CT_DIEMLOAIHINHKT thành công.';
+    -- Tính tổng điểm và tổng hệ số từ bảng CT_DIEMLOAIHINHKT
+    SELECT @TongDiem = SUM(Diem * HeSo), @TongHeSo = SUM(HeSo)
+    FROM CT_DIEMLOAIHINHKT ctk
+    JOIN LOAIHINHKIEMTRA lhkt ON ctk.MaLoaiHinhKT = lhkt.MaLoaiHinhKT
+    WHERE ctk.MaBangDiem = @MaBangDiem AND ctk.MaHocSinh = @MaHocSinh;
+
+    -- Kiểm tra nếu không có dữ liệu trong bảng CT_DIEMLOAIHINHKT
+    IF @TongDiem IS NULL OR @TongHeSo IS NULL OR @TongHeSo = 0
+    BEGIN
+        PRINT 'Không có dữ liệu điểm loại hình kiểm tra cho bảng điểm này hoặc tổng hệ số bằng 0.';
+        RETURN;
+    END
+
+    -- Tính điểm trung bình
+    DECLARE @DTBMon DECIMAL(4,2);
+    SET @DTBMon = @TongDiem / @TongHeSo;
+
+    -- Cập nhật dữ liệu trong bảng CT_BANGDIEMMON
+    EXEC capnhatCTBangDiemMon @MaBangDiem, @MaHocSinh, @DTBMon;
+
+    PRINT 'Tính lại và cập nhật dữ liệu DTBMon trong bảng CT_BANGDIEMMON thành công.';
 END
 GO
-
 CREATE PROCEDURE capnhatCTDiemLoaiHinhKT
     @MaBangDiem VARCHAR(10),
     @MaHocSinh VARCHAR(10),
@@ -367,5 +407,111 @@ BEGIN
     WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh AND MaLoaiHinhKT = @MaLoaiHinhKT AND Lan = @Lan;
 
     PRINT 'Cập nhật dữ liệu trong bảng CT_DIEMLOAIHINHKT thành công.';
+
+    -- Tính lại điểm trung bình môn từ bảng CT_DIEMLOAIHINHKT và cập nhật vào CT_BANGDIEMMON
+    EXEC tinhLaiDTBMon @MaBangDiem, @MaHocSinh;
 END
-GO
+go
+CREATE PROCEDURE xoaCTDiemLoaiHinhKT
+    @MaBangDiem VARCHAR(10),
+    @MaHocSinh VARCHAR(10),
+    @MaLoaiHinhKT VARCHAR(10),
+    @Lan INT
+AS
+BEGIN
+    -- Xóa dữ liệu từ bảng CT_DIEMLOAIHINHKT dựa trên khóa chính
+    DELETE FROM CT_DIEMLOAIHINHKT 
+    WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh AND MaLoaiHinhKT = @MaLoaiHinhKT AND Lan = @Lan;
+
+    PRINT 'Xóa dữ liệu từ bảng CT_DIEMLOAIHINHKT thành công.';
+
+    -- Tính lại DTBMon sau khi xóa dữ liệu
+    EXEC tinhLaiDTBMon @MaBangDiem, @MaHocSinh;
+END
+go
+CREATE PROCEDURE themCTBangDiemMon
+    @MaBangDiem VARCHAR(10),
+    @MaHocSinh VARCHAR(10)
+AS
+BEGIN
+    -- Kiểm tra xem mã bảng điểm tồn tại trong bảng BANGDIEMMON
+    IF NOT EXISTS (SELECT 1 FROM BANGDIEMMON WHERE MaBangDiem = @MaBangDiem)
+    BEGIN
+        PRINT 'Mã bảng điểm không tồn tại.';
+        RETURN;
+    END
+
+    -- Kiểm tra xem mã học sinh tồn tại trong bảng HOCSINH
+    IF NOT EXISTS (SELECT 1 FROM HOCSINH WHERE MaHocSinh = @MaHocSinh)
+    BEGIN
+        PRINT 'Mã học sinh không tồn tại.';
+        RETURN;
+    END
+
+    DECLARE @TongDiem DECIMAL(4,2);
+    DECLARE @TongHeSo INT;
+
+    -- Tính tổng điểm và tổng hệ số từ bảng CT_DIEMLOAIHINHKT
+    SELECT @TongDiem = SUM(Diem * HeSo), @TongHeSo = SUM(HeSo)
+    FROM CT_DIEMLOAIHINHKT ctk
+    JOIN LOAIHINHKIEMTRA lhkt ON ctk.MaLoaiHinhKT = lhkt.MaLoaiHinhKT
+    WHERE ctk.MaBangDiem = @MaBangDiem AND ctk.MaHocSinh = @MaHocSinh;
+
+    -- Kiểm tra nếu không có dữ liệu trong bảng CT_DIEMLOAIHINHKT
+    IF @TongDiem IS NULL OR @TongHeSo IS NULL
+    BEGIN
+        PRINT 'Không có dữ liệu điểm loại hình kiểm tra cho bảng điểm này.';
+        RETURN;
+    END
+
+    -- Tính điểm trung bình
+    DECLARE @DTBMon DECIMAL(4,2);
+    SET @DTBMon = @TongDiem / @TongHeSo;
+
+    -- Thêm dữ liệu vào bảng CT_BANGDIEMMON
+    INSERT INTO CT_BANGDIEMMON (MaBangDiem, MaHocSinh, DTBMon)
+    VALUES (@MaBangDiem, @MaHocSinh, @DTBMon);
+
+    PRINT 'Thêm dữ liệu vào bảng CT_BANGDIEMMON thành công.';
+END
+go
+CREATE PROCEDURE capnhatCTBangDiemMon
+    @MaBangDiem VARCHAR(10),
+    @MaHocSinh VARCHAR(10),
+    @DTBMon DECIMAL(4,2)
+AS
+BEGIN
+    -- Kiểm tra xem bản ghi tồn tại trong bảng CT_BANGDIEMMON
+    IF NOT EXISTS (SELECT 1 FROM CT_BANGDIEMMON WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh)
+    BEGIN
+        PRINT 'Bản ghi không tồn tại.';
+        RETURN;
+    END
+
+    -- Cập nhật dữ liệu trong bảng CT_BANGDIEMMON
+    UPDATE CT_BANGDIEMMON
+    SET DTBMon = @DTBMon
+    WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh;
+
+    PRINT 'Cập nhật dữ liệu trong bảng CT_BANGDIEMMON thành công.';
+END
+go
+CREATE PROCEDURE xoaCTBangDiemMon
+    @MaBangDiem VARCHAR(10),
+    @MaHocSinh VARCHAR(10)
+AS
+BEGIN
+    -- Kiểm tra xem bản ghi tồn tại trong bảng CT_BANGDIEMMON
+    IF NOT EXISTS (SELECT 1 FROM CT_BANGDIEMMON WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh)
+    BEGIN
+        PRINT 'Bản ghi không tồn tại.';
+        RETURN;
+    END
+
+    -- Xóa dữ liệu từ bảng CT_BANGDIEMMON
+    DELETE FROM CT_BANGDIEMMON
+    WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh;
+
+    PRINT 'Xóa dữ liệu từ bảng CT_BANGDIEMMON thành công.';
+END
+go
