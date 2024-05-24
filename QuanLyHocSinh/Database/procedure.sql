@@ -78,8 +78,6 @@ BEGIN
     VALUES (@MaLop, @TenLop, @SiSo, @MaKhoiLop, @MaNamHoc);
 END
 GO
-DROP PROCEDURE IF EXISTS xoahocsinh
-GO
 CREATE PROCEDURE xoahocsinh
     @MaHocSinh VARCHAR(10)
 AS
@@ -165,7 +163,7 @@ BEGIN
         PRINT 'Lỗi xảy ra khi cập nhật thông tin học sinh.';
     END
 END
-	GO
+GO
 CREATE PROCEDURE capnhatlop
     @MaLop VARCHAR(10),
     @TenLop VARCHAR(50),
@@ -296,8 +294,78 @@ BEGIN
         MaLop = @MaLop,
         MaHocKi = @MaHocKi,
         MaMonHoc = @MaMonHoc
-    WHERE 
-        MaBangDiem = @MaBangDiem;
+    WHERE MaBangDiem = @MaBangDiem;
 
-    PRINT 'Cập nhật dữ liệu trong bảng BANGDIEMMON thành công.';
+CREATE PROCEDURE themCTDiemLoaiHinhKT
+    @MaBangDiem VARCHAR(10),
+    @MaHocSinh VARCHAR(10),
+    @MaLoaiHinhKT VARCHAR(10),
+    @Lan INT,
+    @Diem DECIMAL(4,2)
+AS
+BEGIN
+    -- Kiểm tra xem các khóa ngoại tồn tại trong bảng tương ứng
+    IF NOT EXISTS (SELECT 1 FROM BANGDIEMMON WHERE MaBangDiem = @MaBangDiem)
+    BEGIN
+        PRINT 'Mã bảng điểm không tồn tại.';
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM HOCSINH WHERE MaHocSinh = @MaHocSinh)
+    BEGIN
+        PRINT 'Mã học sinh không tồn tại.';
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM LOAIHINHKIEMTRA WHERE MaLoaiHinhKT = @MaLoaiHinhKT)
+    BEGIN
+        PRINT 'Mã loại hình kiểm tra không tồn tại.';
+        RETURN;
+    END
+
+    -- Thêm dữ liệu vào bảng CT_DIEMLOAIHINHKT
+    INSERT INTO CT_DIEMLOAIHINHKT (MaBangDiem, MaHocSinh, MaLoaiHinhKT, Lan, Diem)
+    VALUES (@MaBangDiem, @MaHocSinh, @MaLoaiHinhKT, @Lan, @Diem);
+
+    PRINT 'Thêm dữ liệu vào bảng CT_DIEMLOAIHINHKT thành công.';
 END
+GO
+
+CREATE PROCEDURE xoaCTDiemLoaiHinhKT
+    @MaBangDiem VARCHAR(10),
+    @MaHocSinh VARCHAR(10),
+    @MaLoaiHinhKT VARCHAR(10),
+    @Lan INT
+AS
+BEGIN
+    -- Xóa dữ liệu từ bảng CT_DIEMLOAIHINHKT dựa trên khóa chính
+    DELETE FROM CT_DIEMLOAIHINHKT 
+    WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh AND MaLoaiHinhKT = @MaLoaiHinhKT AND Lan = @Lan;
+
+    PRINT 'Xóa dữ liệu từ bảng CT_DIEMLOAIHINHKT thành công.';
+END
+GO
+
+CREATE PROCEDURE capnhatCTDiemLoaiHinhKT
+    @MaBangDiem VARCHAR(10),
+    @MaHocSinh VARCHAR(10),
+    @MaLoaiHinhKT VARCHAR(10),
+    @Lan INT,
+    @Diem DECIMAL(4,2)
+AS
+BEGIN
+    -- Kiểm tra xem bản ghi có tồn tại hay không
+    IF NOT EXISTS (SELECT 1 FROM CT_DIEMLOAIHINHKT WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh AND MaLoaiHinhKT = @MaLoaiHinhKT AND Lan = @Lan)
+    BEGIN
+        PRINT 'Bản ghi không tồn tại.';
+        RETURN;
+    END
+
+    -- Cập nhật dữ liệu trong bảng CT_DIEMLOAIHINHKT
+    UPDATE CT_DIEMLOAIHINHKT
+    SET Diem = @Diem
+    WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh AND MaLoaiHinhKT = @MaLoaiHinhKT AND Lan = @Lan;
+
+    PRINT 'Cập nhật dữ liệu trong bảng CT_DIEMLOAIHINHKT thành công.';
+END
+GO
