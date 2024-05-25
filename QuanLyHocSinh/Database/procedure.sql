@@ -295,6 +295,7 @@ BEGIN
         MaHocKi = @MaHocKi,
         MaMonHoc = @MaMonHoc
     WHERE MaBangDiem = @MaBangDiem;
+end
 go
 CREATE PROCEDURE themCTDiemLoaiHinhKT
     @MaBangDiem VARCHAR(10),
@@ -353,6 +354,7 @@ BEGIN
     EXEC capnhatCTBangDiemMon @MaBangDiem, @MaHocSinh, @DTBMon;
 
     PRINT 'Cập nhật dữ liệu trong bảng CT_BANGDIEMMON thành công.';
+    EXEC tinhLaiDTBMon @MaBangDiem, @MaHocSinh;
 END
 GO
 CREATE PROCEDURE tinhLaiDTBMon
@@ -493,9 +495,21 @@ BEGIN
     SET DTBMon = @DTBMon
     WHERE MaBangDiem = @MaBangDiem AND MaHocSinh = @MaHocSinh;
 
-    PRINT 'Cập nhật dữ liệu trong bảng CT_BANGDIEMMON thành công.';
+    DECLARE @MaChiTietDSLop VARCHAR(10);
+
+    SELECT @MaChiTietDSLop = ct.MaChiTietDSLop
+    FROM CHITIETDSLOP ct
+    WHERE ct.MaHocSinh = @MaHocSinh;
+
+    -- Gọi thủ tục cập nhật điểm trung bình học kỳ
+    IF @MaChiTietDSLop IS NOT NULL
+    BEGIN
+        EXEC capnhatDTBHocKi @MaChiTietDSLop, @MaHocSinh;
+    END
+
+    PRINT 'Cập nhật điểm trung bình môn và điểm trung bình học kỳ thành công.';
 END
-go
+GO
 CREATE PROCEDURE xoaCTBangDiemMon
     @MaBangDiem VARCHAR(10),
     @MaHocSinh VARCHAR(10)
@@ -515,3 +529,146 @@ BEGIN
     PRINT 'Xóa dữ liệu từ bảng CT_BANGDIEMMON thành công.';
 END
 go
+CREATE PROCEDURE capnhatDTBHocKi
+    @MaChiTietDSLop VARCHAR(10),
+    @MaHocSinh VARCHAR(10)
+AS
+BEGIN
+    DECLARE @TongDiem DECIMAL(10,2); -- Sử dụng DECIMAL(10,2) để tăng độ chính xác
+    DECLARE @TongHeSo INT;
+    DECLARE @DTBHocKi DECIMAL(10,2);
+
+    -- Tính lại điểm trung bình học kỳ từ bảng CT_DIEMLOAIHINHKT
+    SELECT @TongDiem = SUM(ctk.Diem * lhkt.HeSo), 
+           @TongHeSo = SUM(lhkt.HeSo)
+    FROM CT_DIEMLOAIHINHKT ctk
+    JOIN LOAIHINHKIEMTRA lhkt ON ctk.MaLoaiHinhKT = lhkt.MaLoaiHinhKT
+    WHERE ctk.MaHocSinh = @MaHocSinh;
+
+    -- Kiểm tra nếu không có dữ liệu trong bảng CT_DIEMLOAIHINHKT
+    IF @TongDiem IS NULL OR @TongHeSo IS NULL OR @TongHeSo = 0
+    BEGIN
+        PRINT 'Không có dữ liệu điểm loại hình kiểm tra cho học sinh này hoặc tổng hệ số bằng 0.';
+        RETURN;
+    END
+
+    -- Tính điểm trung bình học kỳ
+    SET @DTBHocKi = @TongDiem / @TongHeSo;
+
+    -- Cập nhật điểm trung bình học kỳ vào bảng ChiTietDSLop
+    UPDATE CHITIETDSLOP
+    SET DTBHocKi = @DTBHocKi
+    WHERE MaChiTietDSLop = @MaChiTietDSLop AND MaHocSinh = @MaHocSinh;
+
+    PRINT 'Cập nhật điểm trung bình học kỳ thành công.';
+END
+GO
+CREATE TRIGGER tr_capnhatDTBHocKi
+ON CT_DIEMLOAIHINHKT
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    DECLARE @MaHocSinh VARCHAR(10);
+    DECLARE @MaBangDiem VARCHAR(10);
+
+    -- Lấy danh sách các học sinh bị ảnh hưởng bởi sự thay đổi
+    SELECT DISTINCT MaHocSinh, MaBangDiem INTO #HocSinhAffected FROM inserted;
+    INSERT INTO #HocSinhAffected SELECT DISTINCT MaHocSinh, MaBangDiem FROM deleted;
+
+    -- Duyệt qua từng học sinh và cập nhật điểm trung bình môn và học kỳ
+    DECLARE @CursorHocSinh CURSOR;
+    SET @CursorHocSinh = CURSOR FOR SELECT MaHocSinh, MaBangDiem FROM #HocSinhAffected;
+    OPEN @CursorHocSinh;
+
+    FETCH NEXT FROM @CursorHocSinh INTO @MaHocSinh, @MaBangDiem;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        -- Gọi thủ tục để tính lại điểm trung bình môn và cập nhật điểm trung bình học kỳ
+        EXEC tinhLaiDTBMon @MaBangDiem, @MaHocSinh;
+        
+        FETCH NEXT FROM @CursorHocSinh INTO @MaHocSinh, @MaBangDiem;
+    END
+
+    CLOSE @CursorHocSinh;
+    DEALLOCATE @CursorHocSinh;
+
+    DROP TABLE #HocSinhAffected;
+END
+GO
+CREATE PROCEDURE themCHITIETDSLOP
+    @MaChiTietDSLop VARCHAR(10),
+    @MaLop VARCHAR(10),
+    @MaHocKi VARCHAR(10),
+    @MaHocSinh VARCHAR(10)
+AS
+BEGIN
+    -- Kiểm tra xem các khóa ngoại có tồn tại không
+    IF NOT EXISTS (SELECT 1 FROM LOP WHERE MaLop = @MaLop)
+    BEGIN
+        PRINT 'Mã lớp không tồn tại.';
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM HOCKI WHERE MaHocKi = @MaHocKi)
+    BEGIN
+        PRINT 'Mã học kì không tồn tại.';
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM HOCSINH WHERE MaHocSinh = @MaHocSinh)
+    BEGIN
+        PRINT 'Mã học sinh không tồn tại.';
+        RETURN;
+    END
+
+    -- Thêm dữ liệu vào bảng CHITIETDSLOP
+    INSERT INTO CHITIETDSLOP (MaChiTietDSLop, MaLop, MaHocKi, MaHocSinh, DTBHocKi)
+    VALUES (@MaChiTietDSLop, @MaLop, @MaHocKi, @MaHocSinh, 0);
+
+    -- Tính lại điểm trung bình học kỳ
+    EXEC capnhatDTBHocKi @MaChiTietDSLop, @MaHocSinh;
+END
+GO
+CREATE PROCEDURE capnhatCHITIETDSLOP
+    @MaChiTietDSLop VARCHAR(10),
+    @MaLop VARCHAR(10),
+    @MaHocKi VARCHAR(10),
+    @MaHocSinh VARCHAR(10)
+AS
+BEGIN
+    -- Kiểm tra xem bản ghi có tồn tại không
+    IF NOT EXISTS (SELECT 1 FROM CHITIETDSLOP WHERE MaChiTietDSLop = @MaChiTietDSLop)
+    BEGIN
+        PRINT 'Bản ghi không tồn tại.';
+        RETURN;
+    END
+
+    -- Cập nhật dữ liệu trong bảng CHITIETDSLOP
+    UPDATE CHITIETDSLOP
+    SET MaLop = @MaLop, MaHocKi = @MaHocKi, MaHocSinh = @MaHocSinh
+    WHERE MaChiTietDSLop = @MaChiTietDSLop;
+
+    PRINT 'Cập nhật dữ liệu trong bảng CHITIETDSLOP thành công.';
+
+    -- Tính lại điểm trung bình học kỳ
+    EXEC capnhatDTBHocKi @MaChiTietDSLop, @MaHocSinh;
+END
+GO
+CREATE PROCEDURE xoaCHITIETDSLOP
+    @MaChiTietDSLop VARCHAR(10)
+AS
+BEGIN
+    -- Kiểm tra xem bản ghi có tồn tại không
+    IF NOT EXISTS (SELECT 1 FROM CHITIETDSLOP WHERE MaChiTietDSLop = @MaChiTietDSLop)
+    BEGIN
+        PRINT 'Bản ghi không tồn tại.';
+        RETURN;
+    END
+
+    -- Xóa dữ liệu từ bảng CHITIETDSLOP
+    DELETE FROM CHITIETDSLOP
+    WHERE MaChiTietDSLop = @MaChiTietDSLop;
+
+    PRINT 'Xóa dữ liệu từ bảng CHITIETDSLOP thành công.';
+END
+Go
