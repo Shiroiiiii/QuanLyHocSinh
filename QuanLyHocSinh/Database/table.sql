@@ -1,7 +1,7 @@
 use master
-drop database if exists qlhs2
-create database qlhs2
-use qlhs2
+drop database if exists qlhs1
+create database qlhs1
+use qlhs1
 
 create table THAMSO
 (
@@ -167,22 +167,6 @@ create table CT_BANGDIEMMON
 	foreign key (MaBangDiem) references BANGDIEMMON(MaBangDiem),
 	foreign key (MaHocSinh) references HOCSINH(MaHocSinh)
 )
-SELECT
-    hs.HoTen,
-    lop.TenLop,
-    hk.TenHocKi,
-    mh.TenMonHoc,
-    ROUND(SUM(ct.Diem * lh.HeSo) * 1.0 / NULLIF(SUM(lh.HeSo), 0), 2) AS 'DTB MonHoc'
-FROM
-    HOCSINH hs
-    JOIN LOP lop ON hs.MaLop = lop.MaLop
-    JOIN BANGDIEMMON bdm ON lop.MaLop = bdm.MaLop
-    JOIN HOCKI hk ON bdm.MaHocKi = hk.MaHocKi
-    JOIN MONHOC mh ON bdm.MaMonHoc = mh.MaMonHoc
-    LEFT JOIN CT_DIEMLOAIHINHKT ct ON bdm.MaBangDiem = ct.MaBangDiem AND hs.MaHocSinh = ct.MaHocSinh
-    LEFT JOIN LOAIHINHKIEMTRA lh ON ct.MaLoaiHinhKT = lh.MaLoaiHinhKT
-GROUP BY
-    hs.HoTen, lop.TenLop, hk.TenHocKi, mh.TenMonHoc;
 
 create table CHITIETDSLOP
 (
@@ -195,23 +179,6 @@ create table CHITIETDSLOP
 	foreign key (MaHocKi) references HOCKI(MaHocKi),
 	foreign key (MaHocSinh) references HOCSINH(MaHocSinh)
 )
-SELECT 
-    lop.MaLop,
-    hk.MaHocKi,
-    hs.MaHocSinh,
-    ROUND(SUM(ct.Diem * mh.HeSo * lh.HeSo) / NULLIF(SUM(mh.HeSo * lh.HeSo), 0), 2) as DTBHocKi
-FROM 
-    HOCSINH hs 
-    JOIN LOP lop ON hs.MaLop = lop.MaLop
-    JOIN BANGDIEMMON bdm ON lop.MaLop = bdm.MaLop
-    JOIN HOCKI hk ON bdm.MaHocKi = hk.MaHocKi
-    JOIN MONHOC mh ON bdm.MaMonHoc = mh.MaMonHoc
-    LEFT JOIN CT_DIEMLOAIHINHKT ct ON bdm.MaBangDiem = ct.MaBangDiem AND hs.MaHocSinh = ct.MaHocSinh
-    LEFT JOIN LOAIHINHKIEMTRA lh ON ct.MaLoaiHinhKT = lh.MaLoaiHinhKT
-GROUP BY 
-    lop.MaLop,
-    hk.MaHocKi,
-    hs.MaHocSinh;
 
 create table BAOCAOTONGKETMON
 (
